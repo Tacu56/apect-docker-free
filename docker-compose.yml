@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  apectnet:
+    build: .
+    container_name: apectnet-server
+    ports:
+      - "25565:25565"
+    volumes:
+      - apectnet-data:/data
+    environment:
+      - TYPE=paper
+      - VERSION=latest
+      - MEM=2G
+      - ADDITIONAL_PLUGINS=
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  apectnet-data:
+    driver: local

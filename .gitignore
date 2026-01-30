@@ -1,0 +1,30 @@
+# Git ignore file for ApectNet Docker Infrastructure
+
+# Server data (should be in volume)
+data/
+world/
+logs/
+crash-reports/
+
+# Temporary files
+*.tmp
+*.log
+*.jar
+server.jar
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
+
+# Backup files
+*.bak
+*.backup
