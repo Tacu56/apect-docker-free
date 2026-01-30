@@ -1,113 +1,174 @@
-# ApectNet Docker Infrastructure
+# APECT Minecraft Server Launcher (Docker-Free)
 
-A flexible, CRIU-compatible Docker infrastructure for Minecraft servers supporting multiple server types.
+A lightweight, Docker-free Minecraft server launcher with multiple templates, CRIU checkpointing support, and resource management.
 
 ## Features
 
-- **Multi-type Support**: Paper, Leaf, Folia, and Fabric servers
-- **CRIU Compatible**: Proper PID 1 execution with `exec`
-- **Velocity Integration**: Pre-configured proxy support
-- **Auto-plugin Downloads**: Direct URL plugin/mod installation
-- **Persistent Data**: Volume-mounted server data
-- **Optimized Defaults**: Pre-configured server properties
+- **8 Pre-configured Templates**: Leaf, Fabric, Lifesteal, Parkour, Manhunt, Bedwars, Pixelmon, Economy
+- **Resource Management**: RAM allocation and CPU core limits
+- **CRIU Checkpointing**: Save and restore server state for zero-downtime migrations
+- **Whitelist Support**: Easy whitelist toggle via command line
+- **Cross-Platform**: Works on Linux (Bash) and Windows (Batch)
 
-## Environment Variables
+## Templates
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TYPE` | `paper` | Server type: `paper`, `leaf`, `folia`, `fabric` |
-| `VERSION` | `latest` | Server version (e.g., `1.20.1`, `latest`) |
-| `MEM` | `1G` | Java memory allocation (e.g., `2G`, `4G`) |
-| `ADDITIONAL_PLUGINS` | `""` | Comma-separated URLs for plugins/mods |
+| Template | Base | Description |
+|----------|------|-------------|
+| `leaf` | Leaf | Optimized Paper fork for vanilla+ servers |
+| `fabric` | Fabric | Modded server base |
+| `lifesteal` | Leaf | Lifesteal PvP gamemode |
+| `parkour` | Leaf | Parkour minigame server |
+| `manhunt` | Leaf | Manhunt gamemode |
+| `bedwars` | Leaf | Bedwars minigame server |
+| `pixelmon` | Fabric | Pixelmon modded server |
+| `economy` | Leaf | Economy/survival server |
 
-## Usage
+## Quick Start
 
-### Basic Usage
-
+### Linux/macOS
 ```bash
-docker-compose up -d
+chmod +x server.sh
+./server.sh -t leaf -r 4G:8G -w
 ```
 
-### Custom Server Type
-
-```bash
-docker-compose run --rm -e TYPE=folia -e VERSION=1.20.1 -e MEM=4G apectnet
+### Windows
+```batch
+server.bat -t leaf -r 4G:8G -w
 ```
 
-### With Additional Plugins
+## Command Line Options
 
+| Option | Description |
+|--------|-------------|
+| `-t, --template <name>` | Server template (required) |
+| `-r, --ram <min:max>` | RAM allocation (e.g., `2G:8G` or `4G`) |
+| `-c, --cores <count>` | CPU cores limit |
+| `-w, --whitelist` | Enable whitelist |
+| `-d, --dir <path>` | Server directory (default: `./server`) |
+| `--criu` | Enable CRIU checkpointing mode |
+| `--criu-dir <path>` | Checkpoint directory (default: `./checkpoints`) |
+| `--checkpoint` | Create checkpoint of running server (Linux) |
+| `--restore` | Restore from last checkpoint (Linux) |
+| `-h, --help` | Show help message |
+
+## Examples
+
+### Basic Leaf Server
 ```bash
-docker-compose run --rm \
-  -e TYPE=paper \
-  -e ADDITIONAL_PLUGINS="https://example.com/plugin1.jar,https://example.com/plugin2.jar" \
-  apectnet
+./server.sh -t leaf -r 4G
 ```
 
-### Fabric with Mods
-
+### High-Performance Bedwars Server
 ```bash
-docker-compose run --rm \
-  -e TYPE=fabric \
-  -e VERSION=1.20.1 \
-  -e ADDITIONAL_PLUGINS="https://modrinth.com/mod/fabric-api/latest" \
-  apectnet
+./server.sh -t bedwars -r 4G:16G -c 8 -w
 ```
 
-## Server Types
-
-### Paper
-- Downloads from PaperMC API
-- Supports Velocity proxy via `paper-global.yml`
-- Plugin directory: `plugins/`
-
-### Leaf
-- Downloads from LeafMC API  
-- Supports proxy via `spigot.yml`
-- Plugin directory: `plugins/`
-
-### Folia
-- Downloads from PaperMC Folia API
-- Supports Velocity proxy via `paper-global.yml`
-- Plugin directory: `plugins/`
-
-### Fabric
-- Downloads from FabricMC API
-- Auto-downloads FabricProxy-Lite mod
-- Mod directory: `mods/`
-
-## CRIU Compatibility
-
-This setup is designed to work with CRIU (Checkpoint/Restore in Userspace):
-
-- Uses `exec` to make Java process PID 1
-- No background processes remain after startup
-- Clean process tree for checkpointing
-
-## Persistence
-
-All server data is stored in `/data` and mounted as a Docker volume:
-- World files
-- Server configuration
-- Plugins/mods
-- Player data
-
-## Development
-
-To build the image:
-
+### Pixelmon with CRIU Support
 ```bash
-docker build -t apectnet .
+./server.sh -t pixelmon -r 8G:16G --criu
 ```
 
-To run with custom settings:
-
+### Create Checkpoint
 ```bash
-docker run -d \
-  -p 25565:25565 \
-  -v apectnet-data:/data \
-  -e TYPE=paper \
-  -e VERSION=1.20.1 \
-  -e MEM=2G \
-  --name apectnet-server \
-  apectnet
+./server.sh --checkpoint
 ```
+
+### Restore from Checkpoint
+```bash
+./server.sh --restore
+```
+
+## Resource Management
+
+### RAM Allocation
+Use `-r` or `--ram` to set memory limits:
+- Single value: `4G` (sets both min and max)
+- Range: `2G:8G` (min:max)
+
+### CPU Core Limiting
+Use `-c` or `--cores` to limit CPU usage:
+- Linux: Uses `taskset` for CPU affinity
+- Windows: Uses process affinity mask
+
+## CRIU Checkpointing
+
+CRIU (Checkpoint/Restore In Userspace) allows you to freeze the server state and restore it later.
+
+### Requirements (Linux only)
+- CRIU installed: `sudo apt install criu`
+- Root privileges for checkpoint/restore operations
+
+### CRIU-Compatible JVM Flags
+When `--criu` is enabled, the launcher uses special JVM flags:
+- Serial GC instead of G1GC
+- Disabled compressed oops/class pointers
+- Disabled TLAB
+- Pre-touched memory allocation
+
+### Usage
+1. Start server with CRIU mode:
+   ```bash
+   ./server.sh -t leaf -r 4G --criu
+   ```
+
+2. Create checkpoint (server keeps running):
+   ```bash
+   ./server.sh --checkpoint
+   ```
+
+3. Restore from checkpoint:
+   ```bash
+   ./server.sh --restore
+   ```
+
+## Adding Custom Configurations
+
+Each template has a directory in `templates/`:
+```
+templates/
+├── leaf/
+│   ├── server.properties
+│   ├── config/
+│   └── plugins/
+├── fabric/
+│   ├── server.properties
+│   └── mods/
+├── lifesteal/
+│   ├── server.properties
+│   └── plugins/
+...
+```
+
+Add your custom:
+- **Plugins**: Place `.jar` files in `templates/<template>/plugins/`
+- **Mods**: Place `.jar` files in `templates/<template>/mods/` (Fabric-based)
+- **Configs**: Add any config files/folders to the template directory
+
+Files are copied to the server directory on first launch.
+
+## Directory Structure
+
+```
+apect-docker-free/
+├── server.sh          # Linux/macOS launcher
+├── server.bat         # Windows launcher
+├── templates/         # Server templates
+│   ├── leaf/
+│   ├── fabric/
+│   ├── lifesteal/
+│   ├── parkour/
+│   ├── manhunt/
+│   ├── bedwars/
+│   ├── pixelmon/
+│   └── economy/
+├── server/            # Created on first run
+│   ├── server.jar
+│   ├── server.properties
+│   ├── plugins/
+│   └── ...
+└── checkpoints/       # CRIU checkpoints (if enabled)
+```
+
+## License
+
+MIT License
