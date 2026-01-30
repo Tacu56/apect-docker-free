@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  minecraft:
+    build: .
+    image: minecraft-server:latest
+    container_name: minecraft-server
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      - TEMPLATE=leaf           # Options: leaf, fabric, lifesteal, parkour, manhunt, bedwars, pixelmon, economy
+      - MIN_RAM=2G              # Minimum RAM allocation
+      - MAX_RAM=4G              # Maximum RAM allocation
+      - CPU_CORES=2             # CPU cores limit
+      - WHITELIST=false         # Enable whitelist
+      - EULA=true               # Accept Minecraft EULA
+      - SERVER_PORT=25565       # Server port
+      - JAVA_OPTS=              # Additional Java options
+    
+    # Port mapping
+    ports:
+      - "25565:25565"
+    
+    # Persistent storage
+    volumes:
+      - ./server-data:/server
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 5G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    
+    # CRIU checkpoint compatibility
+    cap_add:
+      - SYS_PTRACE
+      - CHECKPOINT_RESTORE
+    security_opt:
+      - seccomp:unconfined
+    
+    # Stdin for console access
+    stdin_open: true
+    tty: true
+
+# Example configurations for different templates:
+#
+# Lifesteal Server:
+#   environment:
+#     - TEMPLATE=lifesteal
+#     - MAX_RAM=6G
+#     - WHITELIST=true
+#
+# Pixelmon Server (needs more RAM for mods):
+#   environment:
+#     - TEMPLATE=pixelmon
+#     - MIN_RAM=4G
+#     - MAX_RAM=8G
+#     - CPU_CORES=4
+#
+# Bedwars Server:
+#   environment:
+#     - TEMPLATE=bedwars
+#     - MAX_RAM=4G
+#     - WHITELIST=false
