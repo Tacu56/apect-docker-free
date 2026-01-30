@@ -13,6 +13,7 @@ VOLUME ["/data"]
 
 # Copy scripts and configuration files
 COPY entrypoint.sh /entrypoint.sh
+COPY paper-global.yml /paper-global.yml
 COPY eula.txt /data/eula.txt
 COPY server.properties /data/server.properties
 

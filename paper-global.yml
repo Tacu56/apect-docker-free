@@ -1,0 +1,44 @@
+#########################################################
+#                                                       #
+#            Apect Global Configuration                 #
+#                                                       #
+#########################################################
+
+# Proxy configuration for Apect Proxy. 
+# DO NOT CHANGE OR YOUR SERVER WILL NOT WORK!!!
+proxies:
+  velocity:
+    enabled: true
+    online-mode: true
+    secret: ApectNet
+  bungeecord:
+    online-mode: false
+
+# Performance & Optimization Tweaks
+settings:
+  chunk-loading:
+    min-chunk-load-threads: 2
+    player-max-chunk-load-rate: 10.0
+  log-nameless-robjects-not-found: false
+
+# Global Packet & Network Tweaks
+packet-limiter:
+  kick-message: "&cToo many packets! Potential exploit or lag detected."
+  limits:
+    all:
+      interval: 7.0
+      max-packet-rate: 500.0
+
+# General Optimizations
+collisions:
+  enable-player-collisions: true
+  send-full-pos-for-hard-colliding-entities: false
+
+unsupported-settings:
+  allow-no-tick-view-distance: true
+
+# Chunk & System Performance
+chunk-system:
+  gen-parallelism: default
+  io-threads: 4
+  worker-threads: 4

@@ -55,13 +55,7 @@ velocity-setup() {
             # Setup paper-global.yml for proxy protocol
             mkdir -p config
             if [ ! -f config/paper-global.yml ]; then
-                cat > config/paper-global.yml << EOF
-proxies:
-  velocity:
-    enabled: true
-    online-mode: true
-    secret: ""
-EOF
+                cp /paper-global.yml config/paper-global.yml
             fi
             ;;
         "leaf")
