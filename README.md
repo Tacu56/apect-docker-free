@@ -2,6 +2,14 @@
 
 A flexible Docker image for running Minecraft servers with template support. Supports multiple server types including Leaf, Fabric, and various game modes.
 
+## Docker Hub
+
+This image is available on Docker Hub as [`tacu56/apect-minecraft`](https://hub.docker.com/r/tacu56/apect-minecraft).
+
+```bash
+docker pull tacu56/apect-minecraft
+```
+
 ## Features
 
 - **Template-based deployment** - Choose from 8 pre-configured templates
@@ -25,13 +33,37 @@ A flexible Docker image for running Minecraft servers with template support. Sup
 
 ## Quick Start
 
-### Build the Image
+### Using the Pre-built Image
+
+The image is available on Docker Hub as `tacu56/apect-minecraft`:
+
+```bash
+docker pull tacu56/apect-minecraft
+```
+
+### Build the Image Locally
 
 ```bash
 docker build -t minecraft-server .
 ```
 
-### Run a Server
+### Run a Server (Using Docker Hub Image)
+
+```bash
+docker run -d \
+  -e TEMPLATE=leaf \
+  -e MIN_RAM=2G \
+  -e MAX_RAM=4G \
+  -e CPU_CORES=2 \
+  -e WHITELIST=false \
+  -e EULA=true \
+  -p 25565:25565 \
+  -v $(pwd)/server-data:/server \
+  --name my-minecraft-server \
+  tacu56/apect-minecraft
+```
+
+### Run a Server (Using Local Build)
 
 ```bash
 docker run -d \
@@ -48,6 +80,29 @@ docker run -d \
 ```
 
 ### Using Docker Compose
+
+Update the `docker-compose.yml` to use the Docker Hub image:
+
+```yaml
+version: '3.8'
+services:
+  minecraft:
+    image: tacu56/apect-minecraft
+    environment:
+      - TEMPLATE=leaf
+      - MIN_RAM=2G
+      - MAX_RAM=4G
+      - CPU_CORES=2
+      - WHITELIST=false
+      - EULA=true
+    ports:
+      - "25565:25565"
+    volumes:
+      - ./server-data:/server
+    restart: unless-stopped
+```
+
+Then run:
 
 ```bash
 docker-compose up -d
