@@ -1,6 +1,9 @@
 # Minecraft Server Docker Image
-# CRIU checkpoint compatible base image
-FROM eclipse-temurin:21-jdk-jammy
+# CRIU checkpoint compatible base image - Multi-architecture support
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-jammy
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
 LABEL maintainer="minecraft-docker"
 LABEL description="Flexible Minecraft server with template support"

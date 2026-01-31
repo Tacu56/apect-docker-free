@@ -1,0 +1,14 @@
+# Docker Buildx configuration for multi-architecture builds
+version: '3'
+
+services:
+  build:
+    image: docker/buildx-bin
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: |
+      sh -c "
+        docker buildx create --name multiarch --driver docker-container --use
+        docker buildx inspect --bootstrap
+        echo 'Buildx builder ready for multi-architecture builds'
+      "

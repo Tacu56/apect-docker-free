@@ -10,6 +10,24 @@ This image is available on Docker Hub as [`tacu56/apect-minecraft`](https://hub.
 docker pull tacu56/apect-minecraft
 ```
 
+## Architecture Support
+
+This image supports multiple architectures:
+- **AMD64** (x86_64) - Standard servers and desktops
+- **ARM64** (AArch64) - Apple Silicon, ARM servers, Raspberry Pi 4+
+
+The Docker Hub image automatically provides the correct architecture for your system. No additional flags needed.
+
+For local builds on ARM64 systems:
+
+```bash
+# Build for current architecture only
+docker build -t minecraft-server .
+
+# Or build for multiple architectures
+docker buildx build --platform linux/amd64,linux/arm64 -t minecraft-server .
+```
+
 ## Features
 
 - **Template-based deployment** - Choose from 8 pre-configured templates
@@ -45,6 +63,29 @@ docker pull tacu56/apect-minecraft
 
 ```bash
 docker build -t minecraft-server .
+```
+
+### Multi-Architecture Build (For Docker Hub)
+
+To build for multiple architectures (AMD64 and ARM64):
+
+```bash
+# Make the build script executable
+chmod +x build-multiarch.sh
+
+# Run the multi-architecture build
+./build-multiarch.sh
+```
+
+Or manually:
+
+```bash
+# Setup buildx
+docker buildx create --name multiarch --driver docker-container --use
+docker buildx inspect --bootstrap
+
+# Build and push for multiple architectures
+docker buildx build --platform linux/amd64,linux/arm64 -t tacu56/apect-minecraft --push .
 ```
 
 ### Run a Server (Using Docker Hub Image)
