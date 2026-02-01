@@ -42,6 +42,35 @@ get_jar_type() {
     esac
 }
 
+# Validate jar file integrity
+validate_jar() {
+    local jar_file="/server/server.jar"
+    
+    if [ ! -f "$jar_file" ]; then
+        return 1
+    fi
+    
+    # Check if file is empty
+    if [ ! -s "$jar_file" ]; then
+        log_warn "Server jar file is empty"
+        return 1
+    fi
+    
+    # Check if it's a valid jar file (zip archive)
+    if ! file "$jar_file" | grep -q "Zip archive data\|Java archive"; then
+        log_warn "Server jar is not a valid jar file"
+        return 1
+    fi
+    
+    # Try to read jar manifest to verify it's not corrupted
+    if ! unzip -t "$jar_file" >/dev/null 2>&1; then
+        log_warn "Server jar file is corrupted or incomplete"
+        return 1
+    fi
+    
+    return 0
+}
+
 # Download Leaf server jar
 download_leaf() {
     log_info "Downloading Leaf server jar..."
@@ -214,9 +243,14 @@ main() {
     JAR_TYPE=$(get_jar_type)
     log_info "Server type: $JAR_TYPE"
     
-    # Download server jar if not present
-    if [ ! -f /server/server.jar ]; then
-        log_info "Server jar not found, downloading..."
+    # Download server jar if not present or corrupted
+    if [ ! -f /server/server.jar ] || ! validate_jar; then
+        if [ -f /server/server.jar ]; then
+            log_warn "Existing server jar is corrupted, re-downloading..."
+            rm -f /server/server.jar
+        else
+            log_info "Server jar not found, downloading..."
+        fi
         case "$JAR_TYPE" in
             leaf)
                 download_leaf
@@ -225,8 +259,14 @@ main() {
                 download_fabric
                 ;;
         esac
+        
+        # Validate downloaded jar
+        if ! validate_jar; then
+            log_error "Failed to download valid server jar"
+            exit 1
+        fi
     else
-        log_info "Server jar already exists, skipping download"
+        log_info "Server jar already exists and is valid, skipping download"
     fi
     
     # Copy template files (won't overwrite existing)

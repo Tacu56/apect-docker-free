@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     ca-certificates \
     libcap2-bin \
+    unzip \
+    file \
     && rm -rf /var/lib/apt/lists/*
 
 # Create minecraft user for security (CRIU compatible)
