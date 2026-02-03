@@ -36,7 +36,6 @@ docker buildx build --platform linux/amd64,linux/arm64 -t minecraft-server .
 - **Automatic JAR downloads** - Leaf and Fabric server jars are downloaded automatically
 - **Resource control** - Configure RAM and CPU limits
 - **Whitelist support** - Enable whitelist via environment variable
-- **CRIU checkpoint compatible** - Supports live migration and checkpointing
 
 ## Templates
 
