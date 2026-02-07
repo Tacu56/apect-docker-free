@@ -71,62 +71,7 @@ validate_jar() {
     return 0
 }
 
-# Download Leaf server jar
-download_leaf() {
-    log_info "Downloading Leaf server jar..."
-    
-    # Leaf API endpoint for latest build
-    LEAF_API="https://api.leafmc.one/v2/projects/leaf/versions"
-    
-    # Get latest version
-    LATEST_VERSION=$(curl -s "$LEAF_API" | jq -r '.versions[-1]')
-    log_info "Latest Leaf version: $LATEST_VERSION"
-    
-    # Get latest build for this version
-    BUILDS_API="https://api.leafmc.one/v2/projects/leaf/versions/$LATEST_VERSION/builds"
-    LATEST_BUILD=$(curl -s "$BUILDS_API" | jq -r '.builds[-1].build')
-    
-    # Download the jar
-    DOWNLOAD_URL="https://api.leafmc.one/v2/projects/leaf/versions/$LATEST_VERSION/builds/$LATEST_BUILD/downloads/leaf-$LATEST_VERSION-$LATEST_BUILD.jar"
-    
-    if curl -L -o /server/server.jar "$DOWNLOAD_URL"; then
-        log_info "Leaf server jar downloaded successfully"
-    else
-        log_warn "Failed to download from Leaf API, trying alternative..."
-        # Fallback: Try GitHub releases
-        GITHUB_API="https://api.github.com/repos/Winds-Studio/Leaf/releases/latest"
-        DOWNLOAD_URL=$(curl -s "$GITHUB_API" | jq -r '.assets[0].browser_download_url')
-        curl -L -o /server/server.jar "$DOWNLOAD_URL"
-    fi
-}
-
-# Download Fabric server jar
-download_fabric() {
-    log_info "Downloading Fabric server jar..."
-    
-    # Fabric Meta API
-    FABRIC_META="https://meta.fabricmc.net"
-    
-    # Get latest stable Minecraft version
-    MC_VERSION=$(curl -s "$FABRIC_META/v2/versions/game" | jq -r '[.[] | select(.stable == true)][0].version')
-    log_info "Latest Minecraft version: $MC_VERSION"
-    
-    # Get latest Fabric loader version
-    LOADER_VERSION=$(curl -s "$FABRIC_META/v2/versions/loader" | jq -r '.[0].version')
-    log_info "Latest Fabric loader version: $LOADER_VERSION"
-    
-    # Get latest installer version
-    INSTALLER_VERSION=$(curl -s "$FABRIC_META/v2/versions/installer" | jq -r '.[0].version')
-    log_info "Latest Fabric installer version: $INSTALLER_VERSION"
-    
-    # Download server jar
-    DOWNLOAD_URL="$FABRIC_META/v2/versions/loader/$MC_VERSION/$LOADER_VERSION/$INSTALLER_VERSION/server/jar"
-    
-    curl -L -o /server/server.jar "$DOWNLOAD_URL"
-    log_info "Fabric server jar downloaded successfully"
-}
-
-# Copy server jar from template if it exists
+# Copy server jar from template
 copy_template_jar() {
     local template_dir="/templates/${TEMPLATE,,}"
     local template_jar="$template_dir/server.jar"
@@ -270,30 +215,18 @@ main() {
     JAR_TYPE=$(get_jar_type)
     log_info "Server type: $JAR_TYPE"
     
-    # Get server jar: check template folder first, then download if needed
+    # Get server jar from template
     if [ ! -f /server/server.jar ] || ! validate_jar; then
         if [ -f /server/server.jar ]; then
             log_warn "Existing server jar is corrupted, removing..."
             rm -f /server/server.jar
         fi
         
-        # Try to copy from template folder first
+        # Copy from template folder
         if ! copy_template_jar; then
-            log_info "No valid template jar found, downloading from internet..."
-            case "$JAR_TYPE" in
-                leaf)
-                    download_leaf
-                    ;;
-                fabric)
-                    download_fabric
-                    ;;
-            esac
-            
-            # Validate downloaded jar
-            if ! validate_jar; then
-                log_error "Failed to download valid server jar"
-                exit 1
-            fi
+            log_error "No valid server.jar found in template folder: /templates/${TEMPLATE,,}/"
+            log_error "Please ensure a valid server.jar exists in the template directory."
+            exit 1
         fi
     else
         log_info "Server jar already exists and is valid, skipping"

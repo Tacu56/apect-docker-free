@@ -12,7 +12,6 @@ LABEL description="Flexible Minecraft server with template support"
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
-    jq \
     ca-certificates \
     libcap2-bin \
     unzip \
