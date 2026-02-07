@@ -33,7 +33,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t minecraft-server .
 ## Features
 
 - **Template-based deployment** - Choose from 8 pre-configured templates
-- **Automatic JAR downloads** - Leaf and Fabric server jars are downloaded automatically
+- **Custom server JARs** - Upload your own server.jar to template folders, or let the system download automatically
 - **Resource control** - Configure RAM and CPU limits
 - **Whitelist support** - Enable whitelist via environment variable
 
@@ -179,9 +179,24 @@ templates/
 └── economy/        # Economy configs + plugins
 ```
 
+### Custom Server JAR (Optional)
+
+You can provide your own server JAR instead of having the system download one automatically:
+
+1. Place your `server.jar` file directly in the template folder (e.g., `templates/leaf/server.jar`)
+2. The system will validate and use your JAR file
+3. If no JAR is provided or the JAR is invalid, the system falls back to downloading the latest version
+
+This is useful when you want to:
+- Use a specific server version
+- Use a custom/modified server JAR
+- Avoid downloading JARs at container startup
+- Use server software not natively supported (Paper, Purpur, etc.)
+
 ### For Leaf-based templates (leaf, lifesteal, parkour, manhunt, bedwars, economy):
 
 Add your files:
+- `server.jar` - (Optional) Custom server JAR
 - `server.properties` - Server settings
 - `bukkit.yml`, `spigot.yml`, `paper.yml` - Server configs
 - `plugins/` - Plugin JARs and their configs
@@ -189,6 +204,7 @@ Add your files:
 ### For Fabric-based templates (fabric, pixelmon):
 
 Add your files:
+- `server.jar` - (Optional) Custom Fabric server JAR
 - `server.properties` - Server settings
 - `mods/` - Mod JARs
 - `config/` - Mod configurations

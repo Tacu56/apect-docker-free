@@ -126,6 +126,29 @@ download_fabric() {
     log_info "Fabric server jar downloaded successfully"
 }
 
+# Copy server jar from template if it exists
+copy_template_jar() {
+    local template_dir="/templates/${TEMPLATE,,}"
+    local template_jar="$template_dir/server.jar"
+    
+    if [ -f "$template_jar" ]; then
+        log_info "Found server.jar in template folder, copying..."
+        cp "$template_jar" /server/server.jar
+        
+        if validate_jar; then
+            log_info "Template server.jar copied and validated successfully"
+            return 0
+        else
+            log_warn "Template server.jar is invalid or corrupted"
+            rm -f /server/server.jar
+            return 1
+        fi
+    else
+        log_info "No server.jar found in template folder"
+        return 1
+    fi
+}
+
 # Copy template files
 copy_template_files() {
     local template_dir="/templates/${TEMPLATE,,}"
@@ -133,9 +156,13 @@ copy_template_files() {
     if [ -d "$template_dir" ]; then
         log_info "Copying template files from $template_dir..."
         
-        # Copy all files from template, preserving structure
+        # Copy all files from template, preserving structure (exclude server.jar as it's handled separately)
         if [ "$(ls -A $template_dir 2>/dev/null)" ]; then
-            cp -rn "$template_dir"/* /server/ 2>/dev/null || true
+            for item in "$template_dir"/*; do
+                if [ "$(basename "$item")" != "server.jar" ]; then
+                    cp -rn "$item" /server/ 2>/dev/null || true
+                fi
+            done
             log_info "Template files copied"
         else
             log_info "Template directory is empty, skipping..."
@@ -243,30 +270,33 @@ main() {
     JAR_TYPE=$(get_jar_type)
     log_info "Server type: $JAR_TYPE"
     
-    # Download server jar if not present or corrupted
+    # Get server jar: check template folder first, then download if needed
     if [ ! -f /server/server.jar ] || ! validate_jar; then
         if [ -f /server/server.jar ]; then
-            log_warn "Existing server jar is corrupted, re-downloading..."
+            log_warn "Existing server jar is corrupted, removing..."
             rm -f /server/server.jar
-        else
-            log_info "Server jar not found, downloading..."
         fi
-        case "$JAR_TYPE" in
-            leaf)
-                download_leaf
-                ;;
-            fabric)
-                download_fabric
-                ;;
-        esac
         
-        # Validate downloaded jar
-        if ! validate_jar; then
-            log_error "Failed to download valid server jar"
-            exit 1
+        # Try to copy from template folder first
+        if ! copy_template_jar; then
+            log_info "No valid template jar found, downloading from internet..."
+            case "$JAR_TYPE" in
+                leaf)
+                    download_leaf
+                    ;;
+                fabric)
+                    download_fabric
+                    ;;
+            esac
+            
+            # Validate downloaded jar
+            if ! validate_jar; then
+                log_error "Failed to download valid server jar"
+                exit 1
+            fi
         fi
     else
-        log_info "Server jar already exists and is valid, skipping download"
+        log_info "Server jar already exists and is valid, skipping"
     fi
     
     # Copy template files (won't overwrite existing)
